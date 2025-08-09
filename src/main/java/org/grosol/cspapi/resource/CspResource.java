@@ -1,5 +1,6 @@
 package org.grosol.cspapi.resource;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.grosol.cspapi.dto.CspViolationReportDTO;
 import org.grosol.cspapi.service.CspReportService;
@@ -32,6 +33,9 @@ public class CspResource {
     @Inject
     CspReportService cspReportService;
 
+    @ConfigProperty(name = "quarkus.application.version", defaultValue = "unknown")
+    String applicationVersion;
+
     /**
      * Extracts the real client IP address considering proxy headers
      */
@@ -62,6 +66,13 @@ public class CspResource {
     public Response getTest() {
         LOGGER.info("Calling getTest method");
         return Response.ok("{\"message\":\"Hello, World!\"}").build();
+    }
+
+    @GET
+    @Path("/version")
+    public Response getVersion() {
+        LOGGER.info("Calling getVersion method");
+        return Response.ok("{\"version\":\"" + applicationVersion + "\"}").build();
     }
 
     @POST

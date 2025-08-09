@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Alternative build script using Maven profiles
 # Default configuration
 DOCKERUSER=grolimundachim
 IMAGENAME=csp-report-api
@@ -16,7 +17,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [--release]"
             echo ""
             echo "Options:"
-            echo "  --release    Build as release version (removes -SNAPSHOT and increments patch version)"
+            echo "  --release    Build as release version using Maven release profile"
             echo "  -h, --help   Show this help message"
             exit 0
             ;;
@@ -37,21 +38,34 @@ if [[ "$RELEASE_MODE" == true ]]; then
     # Remove -SNAPSHOT suffix for release builds
     RELEASE_VERSION=${CURRENT_VERSION%-SNAPSHOT}
     DOCKER_TAG=$RELEASE_VERSION
+    MAVEN_PROFILES="-Prelease"
     
     echo "Release mode enabled"
     echo "Docker tag will be: $DOCKER_TAG"
+    echo "Using Maven profile: release"
 else
     # Keep full version for snapshot builds
     DOCKER_TAG=$CURRENT_VERSION
+    MAVEN_PROFILES=""
     echo "Snapshot mode (default)"
     echo "Docker tag will be: $DOCKER_TAG"
+fi
+
+# Build the application with appropriate profile
+echo "Building application with Maven..."
+./mvnw clean package $MAVEN_PROFILES -DskipTests
+
+# Check if Maven build was successful
+if [ $? -ne 0 ]; then
+    echo "Maven build failed!"
+    exit 1
 fi
 
 # Build the Docker image
 echo "Building Docker image: $DOCKERUSER/$IMAGENAME:$DOCKER_TAG"
 docker build -t "$DOCKERUSER/$IMAGENAME:$DOCKER_TAG" .
 
-# Check if build was successful
+# Check if Docker build was successful
 if [ $? -ne 0 ]; then
     echo "Docker build failed!"
     exit 1
